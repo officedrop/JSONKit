@@ -132,9 +132,9 @@
 #warning As of JSONKit v1.4, JK_ENABLE_CF_TRANSFER_OWNERSHIP_CALLBACKS is no longer required.  It is no longer a valid option.
 #endif
 
-#ifdef __OBJC_GC__
-#error JSONKit does not support Objective-C Garbage Collection
-#endif
+//#ifdef __OBJC_GC__
+//#error JSONKit does not support Objective-C Garbage Collection
+//#endif
 
 #if __has_feature(objc_arc)
 #error JSONKit does not support Objective-C Automatic Reference Counting (ARC)
@@ -653,7 +653,7 @@ void jk_collectionClassLoadTimeInitialization(void) {
   [[temp_NSNumber init] release];
   temp_NSNumber = NULL;
   
-  [pool release]; pool = NULL;
+  [pool drain]; pool = NULL;
 }
 
 
@@ -2328,7 +2328,7 @@ static id _NSStringObjectFromJSONString(NSString *jsonString, JKParseOptionFlags
   CFIndex    stringLength     = CFStringGetLength((CFStringRef)jsonString);
   NSUInteger stringUTF8Length = [jsonString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
   
-  if((mutableData = (CFMutableDataRef)[(id)CFDataCreateMutable(NULL, (NSUInteger)stringUTF8Length) autorelease]) != NULL) {
+  if((mutableData = (CFMutableDataRef)[NSMakeCollectable(CFDataCreateMutable(NULL, (NSUInteger)stringUTF8Length)) autorelease]) != NULL) {
     UInt8   *utf8String = CFDataGetMutableBytePtr(mutableData);
     CFIndex  usedBytes  = 0L, convertedCount = 0L;
     
@@ -2875,13 +2875,13 @@ static int jk_encode_add_atom_to_buffer(JKEncodeState *encodeState, void *object
 
     switch((encodeOption & JKEncodeOptionAsTypeMask)) {
       case JKEncodeOptionAsData:
-        if(stackBuffer == YES) { if((returnObject = [(id)CFDataCreate(                 NULL,                encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex)                                  autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSData object"); } }
-        else                   { if((returnObject = [(id)CFDataCreateWithBytesNoCopy(  NULL,                encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, NULL)                            autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSData object"); } }
+        if(stackBuffer == YES) { if((returnObject = [NSMakeCollectable(CFDataCreate(                 NULL,                encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex))                                  autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSData object"); } }
+        else                   { if((returnObject = [NSMakeCollectable(CFDataCreateWithBytesNoCopy(  NULL,                encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, NULL))                            autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSData object"); } }
         break;
 
       case JKEncodeOptionAsString:
-        if(stackBuffer == YES) { if((returnObject = [(id)CFStringCreateWithBytes(      NULL, (const UInt8 *)encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, kCFStringEncodingUTF8, NO)       autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSString object"); } }
-        else                   { if((returnObject = [(id)CFStringCreateWithBytesNoCopy(NULL, (const UInt8 *)encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, kCFStringEncodingUTF8, NO, NULL) autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSString object"); } }
+        if(stackBuffer == YES) { if((returnObject = [NSMakeCollectable(CFStringCreateWithBytes(      NULL, (const UInt8 *)encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, kCFStringEncodingUTF8, NO))       autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSString object"); } }
+        else                   { if((returnObject = [NSMakeCollectable(CFStringCreateWithBytesNoCopy(NULL, (const UInt8 *)encodeState->stringBuffer.bytes.ptr, (CFIndex)encodeState->atIndex, kCFStringEncodingUTF8, NO, NULL)) autorelease]) == NULL) { jk_encode_error(encodeState, @"Unable to create NSString object"); } }
         break;
 
       default: jk_encode_error(encodeState, @"Unknown encode as type."); break;
